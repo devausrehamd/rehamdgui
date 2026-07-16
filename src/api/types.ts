@@ -350,3 +350,49 @@ export interface ListBatchesResponse {
   batches: BatchRecord[];
   latestComparison: BatchComparison | null;
 }
+
+// ---------------------------------------------------------------------------
+// Run trace — what went in and out of every graph node
+// ---------------------------------------------------------------------------
+
+/** One run, summarised. `errors > 0` means a node threw. */
+export interface RunSummary {
+  correlationId: string;
+  steps: number;
+  startedAt: string;
+  finishedAt: string;
+  totalLatencyMs: number;
+  errors: number;
+  userId: string | null;
+  mode: string | null;
+}
+
+/** Whether the caller is seeing every run or only their own. Retrieval is
+ *  label-filtered per user, so a run's evidence is scoped to whoever ran it. */
+export interface ListRunsResponse {
+  runs: RunSummary[];
+  scope: "own" | "all";
+}
+
+/** One graph node's execution: what it was given, what it returned.
+ *  `input`/`output` are redacted server-side — the graph state carries the
+ *  caller's bearer token, so `[redacted]` appears in place of any secret. */
+export interface RunStep {
+  seq: number;
+  node: string;
+  status: "ok" | "error" | string;
+  error: string | null;
+  latencyMs: number;
+  recordedAt: string;
+  input: unknown;
+  output: unknown;
+}
+
+export interface RunDetail {
+  correlationId: string;
+  runId: string;
+  queryId: string | null;
+  userId: string | null;
+  mode: string | null;
+  steps: RunStep[];
+}

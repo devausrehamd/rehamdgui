@@ -28,6 +28,7 @@ export function Layout() {
         <nav>
           <NavLink to="/agents">Agents</NavLink>
           {agent && <NavLink to="/rubrics">Rubrics</NavLink>}
+          {agent && <NavLink to="/runs">Runs</NavLink>}
         </nav>
         <span className="spacer" />
 

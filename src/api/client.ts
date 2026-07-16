@@ -22,6 +22,8 @@ import type {
   ListBatchesResponse,
   ListDraftsResponse,
   ListRubricsResponse,
+  ListRunsResponse,
+  RunDetail,
   LoginResponse,
   ResolveAgentResponse,
   Role,
@@ -353,4 +355,16 @@ async function extractError(res: Response, fallback: string): Promise<string> {
   } catch {
     return fallback;
   }
+}
+
+/** Recent runs. `scope` says whether these are all runs or only the caller's —
+ *  the server decides that, based on whether they hold audit:read. */
+export function listRuns(addr: string): Promise<ListRunsResponse> {
+  return agentFetch<ListRunsResponse>(addr, "/api/v1/runs");
+}
+
+/** One run's full node-by-node trace. 404 for a run the caller may not read —
+ *  deliberately indistinguishable from a run that doesn't exist. */
+export function getRun(addr: string, correlationId: string): Promise<RunDetail> {
+  return agentFetch<RunDetail>(addr, `/api/v1/runs/${encodeURIComponent(correlationId)}`);
 }

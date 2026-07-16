@@ -6,6 +6,8 @@ import { AgentPickerPage } from "./pages/AgentPickerPage";
 import { RubricListPage } from "./pages/RubricListPage";
 import { CommittedRubricPage } from "./pages/CommittedRubricPage";
 import { RubricEditorPage } from "./pages/RubricEditorPage";
+import { RunsPage } from "./pages/RunsPage";
+import { RunDetailPage } from "./pages/RunDetailPage";
 
 export default function App() {
   return (
@@ -22,6 +24,8 @@ export default function App() {
             <Route path="/rubrics" element={<RubricListPage />} />
             <Route path="/rubrics/committed/:type" element={<CommittedRubricPage />} />
             <Route path="/drafts/:id" element={<RubricEditorPage />} />
+            <Route path="/runs" element={<RunsPage />} />
+            <Route path="/runs/:correlationId" element={<RunDetailPage />} />
           </Route>
         </Route>
       </Route>
