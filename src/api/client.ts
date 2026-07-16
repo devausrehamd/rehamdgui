@@ -26,6 +26,7 @@ import type {
   ResolveAgentResponse,
   Role,
   Rubric,
+  RubricUpdateResult,
   RunBatchResponse,
   SaveDraftResponse,
   Session,
@@ -215,6 +216,14 @@ export async function agentFetch<T>(
 
 export function listRubrics(addr: string): Promise<CommittedRubricSummary[]> {
   return agentFetch<ListRubricsResponse>(addr, "/api/v1/rubrics").then((r) => r.rubrics);
+}
+
+/** Pull the released rubric set from git into this agent. The server decides
+ *  what moved and whether it's allowed; we display the result. Throws
+ *  ApiError(409) on uncommitted local rubric edits, (400) on a missing release
+ *  ref, (422) when the released set doesn't validate against this agent. */
+export function updateRubrics(addr: string): Promise<RubricUpdateResult> {
+  return agentFetch<RubricUpdateResult>(addr, "/api/v1/rubrics/update", { method: "POST" });
 }
 
 export function getRubric(

@@ -18,8 +18,9 @@ import {
   listDrafts,
   listRubrics,
   saveDraft,
+  updateRubrics,
 } from "../api/client";
-import type { CommittedRubricSummary, DraftSummary } from "../api/types";
+import type { CommittedRubricSummary, DraftSummary, RubricUpdateResult } from "../api/types";
 import { useAgent } from "../context/AgentContext";
 import { useAuth } from "../context/AuthContext";
 import { blankRubric } from "../lib/rubric";
@@ -38,6 +39,8 @@ export function RubricListPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
+  const [updating, setUpdating] = useState(false);
+  const [update, setUpdate] = useState<RubricUpdateResult | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -72,6 +75,27 @@ export function RubricListPage() {
     } catch (err) {
       setError(errMsg(err, "Could not create a draft."));
       setCreating(false);
+    }
+  }
+
+  /** Pull the released rubric set. The agent decides what moved and whether it
+   *  may — we show what it reports, including "nothing changed". */
+  async function pullRelease() {
+    setUpdating(true);
+    setError(null);
+    setUpdate(null);
+    try {
+      const res = await updateRubrics(addr);
+      setUpdate(res);
+      // The committed list may now be different — re-read rather than patch it.
+      if (!res.upToDate) await load();
+    } catch (err) {
+      // The server's message is the useful part here: a missing release ref, a
+      // dirty rubrics/, or a released set that won't validate all read very
+      // differently and each needs a different fix.
+      setError(errMsg(err, "Could not update rubrics from git."));
+    } finally {
+      setUpdating(false);
     }
   }
 
@@ -159,8 +183,21 @@ export function RubricListPage() {
 
       {/* --- Committed --- */}
       <section className="card">
-        <h2>Committed rubrics</h2>
-        <p className="muted small">Live, git-backed, read-only. Click to view.</p>
+        <div className="row">
+          <h2 style={{ margin: 0 }}>Committed rubrics</h2>
+          {canEdit && (
+            <button className="right" onClick={() => void pullRelease()} disabled={updating}>
+              {updating ? "Updating…" : "Update from git"}
+            </button>
+          )}
+        </div>
+        <p className="muted small">
+          Live, git-backed, read-only. Click to view. "Update from git" pulls the
+          released rubric set into this agent — it is how a rubric committed in one
+          sandbox reaches the others.
+        </p>
+
+        {update && <UpdateResult result={update} />}
 
         {committed && committed.length === 0 && <p className="muted">No committed rubrics on this agent.</p>}
 
@@ -213,6 +250,59 @@ export function RubricListPage() {
           </div>
         )}
       </section>
+    </div>
+  );
+}
+
+/**
+ * What a release pull did.
+ *
+ * "Up to date" is reported as plainly as a change. Showing a success tick after
+ * a no-op would let someone believe they had picked up a rubric that is still
+ * sitting unreleased on a branch — the two outcomes look identical from the
+ * button, so the UI has to separate them.
+ */
+function UpdateResult({ result }: { result: RubricUpdateResult }) {
+  const moved = result.changed.filter((c) => c.change !== "unchanged");
+
+  if (result.upToDate) {
+    return (
+      <Alert kind="info">
+        Already on the released rubric set — nothing changed.{" "}
+        <span className="mono small">
+          {result.ref} @ {result.refCommit.slice(0, 8)}
+        </span>
+      </Alert>
+    );
+  }
+
+  return (
+    <div className="alert ok" style={{ background: "var(--ok-bg)", borderColor: "var(--ok)" }}>
+      <div>
+        <strong>
+          Updated {moved.length} rubric{moved.length === 1 ? "" : "s"} from{" "}
+          <span className="mono">{result.ref}</span> @{" "}
+          <span className="mono">{result.refCommit.slice(0, 8)}</span>
+        </strong>
+      </div>
+      <div className="small" style={{ marginTop: "0.35rem" }}>
+        {moved.map((c) => (
+          <div key={c.documentType} className="mono">
+            {c.change === "added" ? "+ " : c.change === "removed" ? "− " : "~ "}
+            {c.documentType} <span className="muted">({c.change})</span>
+            {c.change === "updated" && c.fromHash && c.toHash && (
+              <span className="muted">
+                {" "}
+                {c.fromHash.slice(0, 8)} → {c.toHash.slice(0, 8)}
+              </span>
+            )}
+          </div>
+        ))}
+      </div>
+      <div className="small muted" style={{ marginTop: "0.35rem" }}>
+        Rubric set {result.fromSetHash.slice(0, 8)} → {result.toSetHash.slice(0, 8)}. This agent now
+        judges against the released standard; the change is recorded in custody.
+      </div>
     </div>
   );
 }

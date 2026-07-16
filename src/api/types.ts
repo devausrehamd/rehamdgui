@@ -101,6 +101,27 @@ export interface ListRubricsResponse {
   rubrics: CommittedRubricSummary[];
 }
 
+/** What one document type's rubric did across a release pull. */
+export interface RubricChange {
+  documentType: string;
+  change: "added" | "updated" | "removed" | "unchanged";
+  fromHash: string | null;
+  toHash: string | null;
+}
+
+/** Result of pulling the released rubric set from git. */
+export interface RubricUpdateResult {
+  /** The configured release ref, e.g. "origin/rubrics-release". */
+  ref: string;
+  /** The commit it resolved to — the exact standard now loaded. */
+  refCommit: string;
+  fromSetHash: string;
+  toSetHash: string;
+  changed: RubricChange[];
+  /** True when nothing moved — the agent was already on the released set. */
+  upToDate: boolean;
+}
+
 export interface GetRubricResponse {
   documentType: string;
   hash: string;
