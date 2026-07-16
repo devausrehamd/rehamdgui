@@ -39,6 +39,9 @@ export function Layout() {
             // miss while working — the chip is on screen at all times.
             style={agent.mode === "debug" ? { borderColor: "var(--coinflip)" } : undefined}
           >
+            {/* Which deployment, then which instance within it. Rubrics are
+                per-agent, so both halves have to stay visible while editing. */}
+            {agent.group && <span className="muted">{agent.group} /</span>}
             <strong>{agent.name}</strong>
             <span className="mono muted">{shortCommit(agent.gitCommit)}</span>
             <ModeBadge mode={agent.mode} />

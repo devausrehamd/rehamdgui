@@ -60,6 +60,14 @@ export interface Agent {
   /** production | debug. Optional because an older agent may not advertise it;
    *  treat a missing value as production (the stricter reading), never debug. */
   mode?: AgentMode;
+  /** The deployment this instance belongs to. Agents sharing a group are listed
+   *  together. A label the operator set — intent, not proof. */
+  group?: string;
+  /** Fingerprint of the committed rubric set the agent actually loaded. THIS is
+   *  the proof: agents agreeing here serve identical rubrics, whatever their
+   *  group label or git commit claims. Absent means unknown — never treat a
+   *  missing value as agreement. */
+  rubricSetHash?: string;
   observabilityUrl?: string;
   capabilities: string[];
   health: Health;
