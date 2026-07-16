@@ -15,6 +15,7 @@ import {
   type PatternRule,
 } from "../api/types";
 import { blankCriterion } from "../lib/rubric";
+import { suggestPatterns } from "../lib/pattern-suggest";
 
 interface Props {
   criteria: Criterion[];
@@ -109,6 +110,19 @@ export function CriteriaEditor({ criteria, onChange }: Props) {
             <input value={c.scope} onChange={(e) => update(i, { scope: e.target.value })} />
           </div>
 
+          <SuggestPatterns
+            criterion={c.criterion}
+            existing={c.requiredPatterns}
+            onAccept={(rules, makeHybrid) =>
+              update(i, {
+                requiredPatterns: [...c.requiredPatterns, ...rules],
+                // Accepting a pattern means the criterion now has a deterministic
+                // pre-check, so it must run as hybrid (pattern AND judge). Leaving
+                // it llm_judge would ignore the pattern entirely.
+                ...(makeHybrid && c.assessmentType === "llm_judge" ? { assessmentType: "hybrid" as const } : {}),
+              })
+            }
+          />
           <PatternList
             title="Forbidden patterns (a FAIL if any appear)"
             rules={c.forbiddenPatterns}
@@ -123,6 +137,51 @@ export function CriteriaEditor({ criteria, onChange }: Props) {
       ))}
 
       <button onClick={add}>+ Add criterion</button>
+    </div>
+  );
+}
+
+/**
+ * Propose deterministic patterns derived from the rule's literals, for the
+ * author to accept. Suggestions are NECESSARY conditions only — the button
+ * exists to save typing, never to decide anything. Accepting one wires the
+ * criterion to hybrid so the pattern actually runs alongside the judge.
+ */
+function SuggestPatterns({
+  criterion,
+  existing,
+  onAccept,
+}: {
+  criterion: string;
+  existing: PatternRule[];
+  onAccept: (rules: PatternRule[], makeHybrid: boolean) => void;
+}) {
+  const already = new Set(existing.map((p) => p.pattern));
+  const suggestions = suggestPatterns(criterion).filter((s) => !already.has(s.pattern));
+
+  if (suggestions.length === 0) return null;
+
+  return (
+    <div className="field" style={{ background: "var(--surface-2)", padding: "0.5rem", borderRadius: 6 }}>
+      <label style={{ marginBottom: "0.25rem" }}>Suggested required patterns (necessary conditions)</label>
+      <div className="small muted" style={{ marginBottom: "0.4rem" }}>
+        Derived from the rule's identifiers. A necessary condition, never sufficient — the
+        judge still decides. Accepting runs this criterion as hybrid.
+      </div>
+      {suggestions.map((s) => (
+        <div className="row" key={s.pattern} style={{ marginBottom: "0.35rem", alignItems: "flex-start" }}>
+          <span className="mono badge neutral">{s.label}</span>
+          <span className="small muted" style={{ flex: 1 }}>
+            {s.rationale}
+          </span>
+          <button
+            className="small"
+            onClick={() => onAccept([{ pattern: s.pattern, label: s.label }], true)}
+          >
+            Accept
+          </button>
+        </div>
+      ))}
     </div>
   );
 }

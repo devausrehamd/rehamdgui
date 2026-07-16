@@ -18,14 +18,14 @@ export function blankRubric(documentType = "new-document-type"): Rubric {
     reviewThreshold: 0.8,
     criteria: [blankCriterion("criterion-1")],
     recipe: { steps: [] },
-    trajectory: { description: "", requiredSources: [], forbiddenSources: [] },
+    trajectory: { description: "", required: [], forbidden: [] },
   };
 }
 
 export function blankCriterion(id = "new-criterion"): Criterion {
   return {
     id,
-    criterion: "",
+    criterion: "PASS if the condition is met. FAIL otherwise.",
     explanation: "",
     weight: 1,
     primary: false,

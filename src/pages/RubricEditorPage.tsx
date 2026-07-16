@@ -21,6 +21,7 @@ import {
 import type { Criterion, Rubric, RubricValidationResult } from "../api/types";
 import { useAgent } from "../context/AgentContext";
 import { CriteriaEditor } from "../components/CriteriaEditor";
+import { TrajectoryEditor } from "../components/TrajectoryEditor";
 import { ValidationView } from "../components/ValidationView";
 import { BatchPanel } from "../components/BatchPanel";
 import { Alert, CenterMessage, Spinner } from "../components/ui";
@@ -233,6 +234,15 @@ export function RubricEditorPage() {
         criteria={content.criteria}
         onChange={(criteria: Criterion[]) => patch({ criteria })}
       />
+
+      {/* --- Trajectory: what the run must have DONE (auto-fail if not) --- */}
+      <h2 style={{ marginTop: "2rem" }}>Trajectory</h2>
+      <section className="card">
+        <TrajectoryEditor
+          trajectory={content.trajectory}
+          onChange={(trajectory) => patch({ trajectory })}
+        />
+      </section>
 
       {/* --- Batch steering --- */}
       <h2 style={{ marginTop: "2rem" }}>k-sampling steering</h2>

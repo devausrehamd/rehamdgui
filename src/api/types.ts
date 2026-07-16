@@ -157,11 +157,13 @@ export interface Criterion {
   requiredPatterns: PatternRule[];
 }
 
-export interface SourceRule {
-  id: string;
-  match: string;
-  reason: string;
-}
+/** A trajectory requirement: what the agent must have DONE to earn the
+ *  document. A `document` rule demands a corpus document of that type was
+ *  retrieved; an `agent` rule demands another agent was asked. A miss is an
+ *  auto-fail, decided server-side. */
+export type TrajectoryRule =
+  | { kind: "document"; id: string; documentType: string; reason: string }
+  | { kind: "agent"; id: string; agent: string; query: string; reason: string };
 
 export interface RubricRequire {
   documentType: string;
@@ -172,15 +174,15 @@ export interface RubricRequire {
 
 export interface RubricTrajectory {
   description: string;
-  requiredSources: SourceRule[];
-  forbiddenSources: SourceRule[];
+  /** All must be satisfied by the run; any miss is an auto-fail. */
+  required: TrajectoryRule[];
+  /** None may be present; a hit is an auto-fail. */
+  forbidden: TrajectoryRule[];
 }
 
-/** The full rubric document. The editor mutates `criteria` and the top-level
- *  scalar fields; the recipe/sections/trajectory sub-trees are preserved
- *  verbatim (they are authored elsewhere, and the editor must not corrupt
- *  them). `unknown`-typed sub-trees are pass-through: we hold them, we don't
- *  interpret them. */
+/** The full rubric document. The editor mutates `criteria`, the top-level
+ *  scalar fields, and now `trajectory`; recipe/sections/requires/exports are
+ *  preserved verbatim (authored elsewhere, the editor must not corrupt them). */
 export interface Rubric {
   documentType: string;
   displayName: string;
@@ -188,12 +190,12 @@ export interface Rubric {
   aliases: string[];
   reviewThreshold: number;
   criteria: Criterion[];
-  // Pass-through sub-trees — held verbatim, not edited in this slice.
+  trajectory?: RubricTrajectory;
+  // Pass-through sub-trees — held verbatim, not edited here.
   requires?: RubricRequire[];
   exports?: Record<string, { description: string; schema: string }>;
   sections?: unknown[];
   recipe?: unknown;
-  trajectory?: RubricTrajectory;
 }
 
 // ---------------------------------------------------------------------------
