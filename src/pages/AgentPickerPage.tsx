@@ -193,12 +193,30 @@ function GroupCard({
                     <span className="mono">{shortCommit(a.gitCommit)}</span>
                     {" · "}
                     last seen {ago(a.lastSeen)}
-                    {a.capabilities.length > 0 && <> · {a.capabilities.join(", ")}</>}
                   </span>
                 </div>
                 <div className="small muted mono">
                   {a.address}
                   {a.rubricSetHash && <> · rubrics {a.rubricSetHash.slice(0, 8)}</>}
+                </div>
+
+                {/* What this agent can judge. Derived by the agent from the
+                    rubrics it loaded, so it cannot drift from what it can
+                    really do. An empty list is stated plainly rather than
+                    hidden — an agent claiming nothing routes nowhere. */}
+                <div className="small" style={{ marginTop: "0.2rem" }}>
+                  <span className="muted">judges: </span>
+                  {a.capabilities.length > 0 ? (
+                    a.capabilities.map((c) => (
+                      <span className="badge neutral mono" key={c} style={{ marginRight: 4 }}>
+                        {c}
+                      </span>
+                    ))
+                  ) : (
+                    <span className="badge warn" title="This agent reported no rubrics, so it can judge nothing.">
+                      no document types
+                    </span>
+                  )}
                 </div>
               </div>
               <button className="primary right" onClick={() => onChoose(a)}>
