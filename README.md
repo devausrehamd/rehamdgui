@@ -10,6 +10,19 @@ A **thin web client** for the QMS agent stack. Part of the four-project stack in
 | 3 | Discovery | `discovery` | 3005 |
 | 4 | **GUI (this)** | `gui` | 5173 |
 
+> ### 📚 Part of the QMS learning package
+> This client is a lesson in **restraint**: everything hard already exists and is
+> tested server-side, so the GUI's whole job is to *display what the servers
+> return and submit what the user does* — and to never re-derive a result the
+> backend already computed. The k-sampling panel below (showing pass *rates* and
+> confidence intervals instead of a single verdict) is the worked example of
+> presenting uncertainty honestly.
+>
+> - **Master repo (start here):** https://github.com/devausrehamd/rehamdmacmain
+>   — clone with `git clone --recursive` to get all four services.
+> - **Full technical docs:** [`../rehamdmacflow/docs/`](../rehamdmacflow/docs/README.md)
+>   (start with [00-philosophy.md](../rehamdmacflow/docs/00-philosophy.md)).
+
 ## The one rule: the GUI computes nothing
 
 Everything hard already exists server-side and is tested. This client **displays
@@ -65,6 +78,18 @@ The three backend services must be running — from `~/projects`, use
 | `npm run build` | Typecheck + production build |
 | `npm run preview` | Serve the built bundle |
 | `npm run typecheck` | `tsc --noEmit` |
+
+### Verifying it works — no smoke tests here, by design
+
+The GUI computes nothing, so there is nothing numerical to smoke-test in the
+browser. Its checks are **`npm run typecheck`** and **`npm run build`** (the types
+in `src/api/types.ts` mirror the server responses, so a shape drift fails the
+build). The *behaviours* this UI surfaces are proven by the Agent's smoke tests —
+run these in `../rehamdmacflow` to see the ground truth the GUI merely displays:
+
+- `npm run smoke:rubric-api` — the rubric validation the editor calls
+- `npm run smoke:batch` — the k-sampling stats behind the steering panel
+- `npm run smoke:review` — the review/disposition contract
 
 ## Flow (slice one)
 
