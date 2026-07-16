@@ -38,9 +38,23 @@ const GUID_KEY = "qms.agentGuid";
 
 const AgentContext = createContext<AgentContextValue | null>(null);
 
+function storedGuid(): string | null {
+  try {
+    return sessionStorage.getItem(GUID_KEY);
+  } catch {
+    return null;
+  }
+}
+
 export function AgentProvider({ children }: { children: ReactNode }) {
   const [agent, setAgent] = useState<Agent | null>(null);
-  const [status, setStatus] = useState<AgentStatus>("none");
+  // Start as `resolving` when a GUID was persisted: on a fresh page load (deep
+  // link or refresh) the address must be re-resolved before any agent call, and
+  // starting at `none` would let the route guard redirect to the picker in the
+  // first render, before resolution had a chance to run.
+  const [status, setStatus] = useState<AgentStatus>(() =>
+    storedGuid() ? "resolving" : "none",
+  );
   const [error, setError] = useState<string | null>(null);
 
   const select = useCallback((next: Agent) => {
@@ -66,12 +80,7 @@ export function AgentProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const refresh = useCallback(async () => {
-    let guid: string | null = null;
-    try {
-      guid = sessionStorage.getItem(GUID_KEY);
-    } catch {
-      guid = null;
-    }
+    const guid = storedGuid();
     if (!guid) {
       setStatus("none");
       return;
