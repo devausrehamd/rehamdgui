@@ -377,6 +377,19 @@ export interface ListRunsResponse {
 /** One graph node's execution: what it was given, what it returned.
  *  `input`/`output` are redacted server-side — the graph state carries the
  *  caller's bearer token, so `[redacted]` appears in place of any secret. */
+/** One prompt sent to the model from within a node, and what came back.
+ *  This is what answers "was the retrieved value actually IN the prompt?" —
+ *  the step's input tells you what the node held, this tells you what it sent. */
+export interface LlmCall {
+  seq: number;
+  model: string | null;
+  prompt: string;
+  completion: string | null;
+  status: "ok" | "error" | string;
+  error: string | null;
+  latencyMs: number;
+}
+
 export interface RunStep {
   seq: number;
   node: string;
@@ -386,6 +399,8 @@ export interface RunStep {
   recordedAt: string;
   input: unknown;
   output: unknown;
+  /** Prompts made beneath this node. Empty for nodes that call no model. */
+  llmCalls: LlmCall[];
 }
 
 export interface RunDetail {
