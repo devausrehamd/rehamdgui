@@ -11,7 +11,7 @@ import { useNavigate } from "react-router-dom";
 import { listAgents, ApiError, NetworkError } from "../api/client";
 import type { Agent } from "../api/types";
 import { useAgent } from "../context/AgentContext";
-import { ago, shortCommit } from "../lib/format";
+import { ago, shortCommit, shortGuid } from "../lib/format";
 import { groupAgents, type AgentGroup } from "../lib/grouping";
 import { Alert, CenterMessage, HealthBadge, ModeBadge, Spinner } from "../components/ui";
 
@@ -181,11 +181,20 @@ function GroupCard({
                     it produces is provisional and cannot be approved.
                   </div>
                 )}
-                <div className="small muted">
-                  <span className="mono">{shortCommit(a.gitCommit)}</span>
-                  {" · "}
-                  last seen {ago(a.lastSeen)}
-                  {a.capabilities.length > 0 && <> · {a.capabilities.join(", ")}</>}
+                {/* The GUID leads: with one agent per sandbox, several agents
+                    routinely share a name, a commit and a rubric set, and this
+                    is the only field that tells them apart. Full value on hover. */}
+                <div className="small">
+                  <span className="mono" title={`Agent GUID: ${a.guid}`}>
+                    {shortGuid(a.guid)}
+                  </span>
+                  <span className="muted">
+                    {" · "}
+                    <span className="mono">{shortCommit(a.gitCommit)}</span>
+                    {" · "}
+                    last seen {ago(a.lastSeen)}
+                    {a.capabilities.length > 0 && <> · {a.capabilities.join(", ")}</>}
+                  </span>
                 </div>
                 <div className="small muted mono">
                   {a.address}

@@ -7,7 +7,7 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useAgent } from "../context/AgentContext";
-import { shortCommit } from "../lib/format";
+import { shortCommit, shortGuid } from "../lib/format";
 import { HealthBadge, ModeBadge } from "./ui";
 
 export function Layout() {
@@ -39,10 +39,14 @@ export function Layout() {
             // miss while working — the chip is on screen at all times.
             style={agent.mode === "debug" ? { borderColor: "var(--coinflip)" } : undefined}
           >
-            {/* Which deployment, then which instance within it. Rubrics are
-                per-agent, so both halves have to stay visible while editing. */}
+            {/* Which deployment, then WHICH INSTANCE within it. Rubrics are
+                per-agent, and with one agent per sandbox the name alone does
+                not identify one — several sandboxes happily run "QMS Agent".
+                The GUID is the identity, so it stays on screen next to the
+                name rather than hiding in a tooltip. */}
             {agent.group && <span className="muted">{agent.group} /</span>}
             <strong>{agent.name}</strong>
+            <span className="mono muted">{shortGuid(agent.guid)}</span>
             <span className="mono muted">{shortCommit(agent.gitCommit)}</span>
             <ModeBadge mode={agent.mode} />
             <HealthBadge health={agent.health} />

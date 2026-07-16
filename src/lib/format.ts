@@ -10,6 +10,23 @@ export function shortCommit(commit: string): string {
   return commit.slice(0, 8);
 }
 
+/**
+ * A readable prefix of an agent's GUID, e.g. "agt_037e923c".
+ *
+ * The GUID identifies the RUNNING INSTANCE and is the only field guaranteed to
+ * distinguish one agent from another: with one agent per sandbox, n sandboxes
+ * routinely produce n agents sharing a name, a commit, and a rubric set. Names
+ * are for humans; this is the identity. The full value stays available on hover
+ * and is what the GUI stores and resolves through Discovery.
+ *
+ * Keeps the `agt_` prefix so it is recognisable as an agent id, plus 8 hex
+ * chars — 32 bits, ample to tell apart the handful of agents a person is
+ * looking at, while staying short enough to sit next to a name.
+ */
+export function shortGuid(guid: string): string {
+  return guid.slice(0, 12);
+}
+
 /** Human "age" of an ISO timestamp, e.g. "12s ago", "3m ago". Used to make a
  *  stale agent visible. */
 export function ago(iso: string, now = Date.now()): string {
