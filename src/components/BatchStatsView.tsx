@@ -10,13 +10,21 @@
 //
 // Every value comes from the server's BatchStats. The GUI computes nothing.
 
-import type { BatchComparison, BatchStats, CriterionStat } from "../api/types";
+import { useState } from "react";
+import type { BatchComparison, BatchRuns, BatchStats, CriterionStat, CriterionVerdict } from "../api/types";
 import { pct } from "../lib/format";
 
-export function BatchStatsView({ stats }: { stats: BatchStats }) {
+export function BatchStatsView({ stats, runs }: { stats: BatchStats; runs?: BatchRuns }) {
   return (
     <div>
       <ScoreDistributionView stats={stats} />
+
+      {runs === null && (
+        <div className="small muted" style={{ marginTop: "0.6rem" }}>
+          Per-run verdicts were not captured for this batch, so the rationales behind
+          these rates are unavailable. Re-run it to record them.
+        </div>
+      )}
 
       <div className="table-scroll" style={{ marginTop: "1rem" }}>
         <table>
@@ -32,11 +40,54 @@ export function BatchStatsView({ stats }: { stats: BatchStats }) {
           </thead>
           <tbody>
             {stats.perCriterion.map((c) => (
-              <CriterionRow key={c.id} c={c} />
+              <CriterionRow key={c.id} c={c} runs={runs} />
             ))}
           </tbody>
         </table>
       </div>
+    </div>
+  );
+}
+
+/**
+ * The judge's own reasoning for one criterion across the k runs, split by what
+ * it decided.
+ *
+ * The split is the whole point. A rate of 12/20 says the model could not decide;
+ * reading the PASS rationales against the FAIL rationales shows which two
+ * readings of the wording it was oscillating between — which is the thing you
+ * actually rewrite. Presented as a list rather than a summary because there is
+ * no honest way to average an explanation.
+ */
+function Rationales({ criterionId, runs }: { criterionId: string; runs: CriterionVerdict[][] }) {
+  const mine = runs
+    .map((run, i) => ({ run: i + 1, v: run.find((v) => v.id === criterionId) }))
+    .filter((x): x is { run: number; v: CriterionVerdict } => Boolean(x.v));
+
+  if (mine.length === 0) return <div className="small muted">No verdicts recorded for this criterion.</div>;
+
+  const passes = mine.filter((x) => x.v.verdict === "pass");
+  const fails = mine.filter((x) => x.v.verdict === "fail");
+
+  const group = (label: string, items: typeof mine, cls: string) =>
+    items.length === 0 ? null : (
+      <div style={{ marginBottom: "0.5rem" }}>
+        <span className={`badge ${cls}`}>
+          {label} ({items.length})
+        </span>
+        {items.map((x) => (
+          <div key={x.run} className="small" style={{ margin: "0.25rem 0 0 0.25rem" }}>
+            <span className="mono muted">run {x.run}</span>{" "}
+            <span className="muted">[{x.v.source}]</span> {x.v.rationale || <em className="muted">(no rationale given)</em>}
+          </div>
+        ))}
+      </div>
+    );
+
+  return (
+    <div style={{ padding: "0.6rem", background: "var(--surface-2)", borderRadius: 6, marginTop: "0.4rem" }}>
+      {group("PASSED", passes, "ok")}
+      {group("FAILED", fails, "error")}
     </div>
   );
 }
@@ -82,8 +133,15 @@ function ScoreDistributionView({ stats }: { stats: BatchStats }) {
   );
 }
 
-function CriterionRow({ c }: { c: CriterionStat }) {
+function CriterionRow({ c, runs }: { c: CriterionStat; runs?: BatchRuns }) {
+  // Coin-flips open by default: the flag is a question ("why can't it decide?")
+  // and the rationales are the answer, so making someone click for them buries
+  // the point of the flag.
+  const [open, setOpen] = useState(c.coinFlip);
+  const hasRuns = Array.isArray(runs) && runs.length > 0;
+
   return (
+    <>
     <tr>
       <td className="mono">
         {c.id}
@@ -92,6 +150,13 @@ function CriterionRow({ c }: { c: CriterionStat }) {
             <span className="badge coinflip" title="The CI straddles 50% — the model can't consistently decide. Tighten the wording.">
               COIN-FLIP — ambiguous wording
             </span>
+          </div>
+        )}
+        {hasRuns && (
+          <div>
+            <button className="small" style={{ marginTop: 4 }} onClick={() => setOpen((o) => !o)}>
+              {open ? "Hide" : "Why?"}
+            </button>
           </div>
         )}
       </td>
@@ -115,6 +180,14 @@ function CriterionRow({ c }: { c: CriterionStat }) {
         )}
       </td>
     </tr>
+    {open && hasRuns && (
+      <tr>
+        <td colSpan={6} style={{ paddingTop: 0 }}>
+          <Rationales criterionId={c.id} runs={runs} />
+        </td>
+      </tr>
+    )}
+    </>
   );
 }
 

@@ -176,7 +176,7 @@ export function BatchPanel({ addr, draftId }: { addr: string; draftId: string })
           <h3>
             Batch detail <span className="mono small muted">{selected.documentRef} · k={selected.k}</span>
           </h3>
-          <BatchStatsView stats={selected.stats} />
+          <BatchStatsView stats={selected.stats} runs={selected.runs} />
         </div>
       )}
     </div>

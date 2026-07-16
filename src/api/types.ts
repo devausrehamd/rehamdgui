@@ -295,11 +295,28 @@ export interface BatchStats {
   gatePassRate: number;
 }
 
+/** One criterion's verdict on ONE run, with the judge's own reasoning.
+ *  This is the evidence behind the aggregate: `stats` says a criterion is a
+ *  coin-flip, these say what the model was thinking each time it flipped. */
+export interface CriterionVerdict {
+  id: string;
+  verdict: "pass" | "fail";
+  /** Who decided: a pattern match, the LLM, or both. */
+  source: "deterministic" | "llm_judge" | "hybrid";
+  rationale: string;
+  patternHits?: unknown;
+}
+
+/** Verdicts for every criterion, for each of the k runs. Null on batches
+ *  recorded before runs were kept — "not captured", never "no verdicts". */
+export type BatchRuns = CriterionVerdict[][] | null;
+
 export interface RunBatchResponse {
   batchId: string;
   k: number;
   documentRef: string;
   stats: BatchStats;
+  runs?: BatchRuns;
 }
 
 export interface BatchRecord {
@@ -307,6 +324,7 @@ export interface BatchRecord {
   documentRef: string;
   k: number;
   stats: BatchStats;
+  runs?: BatchRuns;
   createdAt: string; // ISO
 }
 
