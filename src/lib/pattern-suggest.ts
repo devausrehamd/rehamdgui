@@ -29,7 +29,7 @@ const IDENTIFIER_PATTERNS: { re: RegExp; kind: string }[] = [
 ];
 
 export function suggestPatterns(criterion: string): PatternSuggestion[] {
-  const passClause = /PASS if\s+([\s\S]*?)\.\s*FAIL otherwise\.?/i.exec(criterion)?.[1] ?? criterion;
+  const passClause = /PASS if\b([\s\S]*?)\.\s*FAIL\b/i.exec(criterion)?.[1] ?? criterion;
   const seen = new Set<string>();
   const out: PatternSuggestion[] = [];
 

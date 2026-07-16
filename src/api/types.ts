@@ -180,6 +180,83 @@ export interface RubricTrajectory {
   forbidden: TrajectoryRule[];
 }
 
+// --- Sections: the document's declared structure (mirrors section-schema.ts) ---
+
+export const FIELD_TYPES = ["string", "integer", "number", "enum", "identifier", "reference"] as const;
+export type FieldType = (typeof FIELD_TYPES)[number];
+
+export const FIELD_PROVENANCE = ["retrieved", "generated", "computed"] as const;
+export type FieldProvenance = (typeof FIELD_PROVENANCE)[number];
+
+export interface SectionField {
+  name: string;
+  type: FieldType;
+  /** retrieved = cite a source; generated = model prose; computed = code formula. */
+  provenance: FieldProvenance;
+  required?: boolean;
+  /** enum domain, when type is enum. */
+  domain?: (string | number)[];
+  min?: number;
+  max?: number;
+  /** the formula, when provenance is computed (e.g. "severity * occurrence"). */
+  formula?: string;
+  /** the export a reference field points at, when type is reference. */
+  referenceExport?: string;
+  /** the SOP clause this field came from — provenance for the auditor. */
+  sopClause?: string;
+}
+
+export interface RubricSection {
+  id: string;
+  title: string;
+  /** single = one row; array = many. */
+  cardinality: "single" | "array";
+  /** step ids whose outputs ground this section. */
+  groundedIn: string[];
+  fields: SectionField[];
+}
+
+// --- Recipe: the ordered program that produces the document (mirrors recipe.ts) ---
+
+export const RECIPE_STEP_KINDS = [
+  "retrieve_sections",
+  "query_table",
+  "recall_prior",
+  "generate_section",
+  "validate_section",
+  "judge",
+  "require_human",
+] as const;
+export type RecipeStepKind = (typeof RECIPE_STEP_KINDS)[number];
+
+/** One recipe step. Fields beyond id/kind/inputs are kind-specific; kept loose
+ *  here and validated server-side on save. */
+export interface RecipeStep {
+  id: string;
+  kind: RecipeStepKind;
+  /** ids of prior steps this one consumes (the intra-document DAG). */
+  inputs?: string[];
+  // retrieve_sections
+  source?: string;
+  sections?: string[];
+  // query_table
+  collection?: string;
+  // recall_prior
+  documentType?: string;
+  export?: string;
+  // generate_section / validate_section
+  sectionId?: string;
+  bestOf?: number;
+  // judge
+  criteria?: string[];
+  // require_human
+  prompt?: string;
+}
+
+export interface RubricRecipe {
+  steps: RecipeStep[];
+}
+
 /** The full rubric document. The editor mutates `criteria`, the top-level
  *  scalar fields, and now `trajectory`; recipe/sections/requires/exports are
  *  preserved verbatim (authored elsewhere, the editor must not corrupt them). */
@@ -194,8 +271,8 @@ export interface Rubric {
   // Pass-through sub-trees — held verbatim, not edited here.
   requires?: RubricRequire[];
   exports?: Record<string, { description: string; schema: string }>;
-  sections?: unknown[];
-  recipe?: unknown;
+  sections?: RubricSection[];
+  recipe?: RubricRecipe;
 }
 
 // ---------------------------------------------------------------------------

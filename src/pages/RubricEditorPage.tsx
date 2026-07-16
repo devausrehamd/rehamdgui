@@ -22,6 +22,8 @@ import type { Criterion, Rubric, RubricValidationResult } from "../api/types";
 import { useAgent } from "../context/AgentContext";
 import { CriteriaEditor } from "../components/CriteriaEditor";
 import { TrajectoryEditor } from "../components/TrajectoryEditor";
+import { SectionEditor } from "../components/SectionEditor";
+import { RecipeEditor } from "../components/RecipeEditor";
 import { ValidationView } from "../components/ValidationView";
 import { BatchPanel } from "../components/BatchPanel";
 import { Alert, CenterMessage, Spinner } from "../components/ui";
@@ -234,6 +236,25 @@ export function RubricEditorPage() {
         criteria={content.criteria}
         onChange={(criteria: Criterion[]) => patch({ criteria })}
       />
+
+      {/* --- Sections: the document's declared structure --- */}
+      <h2 style={{ marginTop: "2rem" }}>Sections ({content.sections?.length ?? 0})</h2>
+      <section className="card">
+        <SectionEditor
+          sections={content.sections ?? []}
+          onChange={(sections) => patch({ sections })}
+        />
+      </section>
+
+      {/* --- Recipe: the ordered program that generates the document --- */}
+      <h2 style={{ marginTop: "2rem" }}>Recipe ({content.recipe?.steps?.length ?? 0} steps)</h2>
+      <section className="card">
+        <RecipeEditor
+          recipe={content.recipe}
+          sectionIds={(content.sections ?? []).map((s) => s.id)}
+          onChange={(recipe) => patch({ recipe })}
+        />
+      </section>
 
       {/* --- Trajectory: what the run must have DONE (auto-fail if not) --- */}
       <h2 style={{ marginTop: "2rem" }}>Trajectory</h2>
