@@ -46,6 +46,10 @@ export interface Session {
 
 export type Health = "healthy" | "degraded" | "unknown";
 
+/** An agent instance's operating mode, fixed for the life of its process.
+ *  Displayed, never decided here — the server enforces what each mode allows. */
+export type AgentMode = "production" | "debug";
+
 /** An Agent Card as resolved by Discovery. `address` is a lease — never
  *  persisted; the GUI stores `guid` and re-resolves. */
 export interface Agent {
@@ -53,6 +57,9 @@ export interface Agent {
   name: string;
   gitCommit: string;
   address: string;
+  /** production | debug. Optional because an older agent may not advertise it;
+   *  treat a missing value as production (the stricter reading), never debug. */
+  mode?: AgentMode;
   observabilityUrl?: string;
   capabilities: string[];
   health: Health;

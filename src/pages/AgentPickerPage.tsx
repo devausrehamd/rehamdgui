@@ -12,7 +12,7 @@ import { listAgents, ApiError, NetworkError } from "../api/client";
 import type { Agent } from "../api/types";
 import { useAgent } from "../context/AgentContext";
 import { ago, shortCommit } from "../lib/format";
-import { Alert, CenterMessage, HealthBadge, Spinner } from "../components/ui";
+import { Alert, CenterMessage, HealthBadge, ModeBadge, Spinner } from "../components/ui";
 
 export function AgentPickerPage() {
   const { agent: selected, select } = useAgent();
@@ -84,9 +84,16 @@ export function AgentPickerPage() {
                   <div>
                     <div className="row" style={{ gap: "0.5rem" }}>
                       <strong>{a.name}</strong>
+                      <ModeBadge mode={a.mode} />
                       <HealthBadge health={a.health} />
                       {isSelected && <span className="badge ok">selected</span>}
                     </div>
+                    {a.mode === "debug" && (
+                      <div className="small" style={{ color: "var(--coinflip)" }}>
+                        Debug agent — may evaluate against uncommitted draft rubrics. Anything it
+                        produces is provisional and cannot be approved.
+                      </div>
+                    )}
                     <div className="small muted">
                       <span className="mono">{shortCommit(a.gitCommit)}</span>
                       {" · "}

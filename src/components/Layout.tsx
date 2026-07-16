@@ -8,7 +8,7 @@ import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useAgent } from "../context/AgentContext";
 import { shortCommit } from "../lib/format";
-import { HealthBadge } from "./ui";
+import { HealthBadge, ModeBadge } from "./ui";
 
 export function Layout() {
   const { session, logout } = useAuth();
@@ -32,9 +32,16 @@ export function Layout() {
         <span className="spacer" />
 
         {agent && (
-          <span className="agent-chip" title={`GUID ${agent.guid}`}>
+          <span
+            className="agent-chip"
+            title={`GUID ${agent.guid}`}
+            // A debug agent is outlined so the distinction is impossible to
+            // miss while working — the chip is on screen at all times.
+            style={agent.mode === "debug" ? { borderColor: "var(--coinflip)" } : undefined}
+          >
             <strong>{agent.name}</strong>
             <span className="mono muted">{shortCommit(agent.gitCommit)}</span>
+            <ModeBadge mode={agent.mode} />
             <HealthBadge health={agent.health} />
           </span>
         )}
