@@ -24,6 +24,10 @@ import type {
   ListRubricsResponse,
   ListRunsResponse,
   RunDetail,
+  PendingDraft,
+  ReviewDetail,
+  Disposition,
+  DispositionResult,
   LoginResponse,
   ResolveAgentResponse,
   Role,
@@ -351,7 +355,12 @@ async function parse<T>(res: Response): Promise<T> {
 async function extractError(res: Response, fallback: string): Promise<string> {
   try {
     const body = (await res.json()) as { error?: string; message?: string };
-    return body.error ?? body.message ?? fallback;
+    // Prefer `message`: the Agent puts the human text there and the error CLASS
+    // NAME in `error` ({error:"ForbiddenError", message:"The approver must not
+    // be the author"}), so taking `error` first surfaced class names to the
+    // user. The ID Server and Discovery instead carry their text in `error`
+    // with no `message`, so it is the fallback.
+    return body.message ?? body.error ?? fallback;
   } catch {
     return fallback;
   }
@@ -367,4 +376,37 @@ export function listRuns(addr: string): Promise<ListRunsResponse> {
  *  deliberately indistinguishable from a run that doesn't exist. */
 export function getRun(addr: string, correlationId: string): Promise<RunDetail> {
   return agentFetch<RunDetail>(addr, `/api/v1/runs/${encodeURIComponent(correlationId)}`);
+}
+
+// ---------------------------------------------------------------------------
+// Review flow — draft queue, review detail, disposition
+// ---------------------------------------------------------------------------
+
+/** Drafts awaiting review. Requires draft:view-any (server-enforced). */
+export function listPendingDrafts(addr: string, status = "pending_review"): Promise<PendingDraft[]> {
+  return agentFetch<{ drafts: PendingDraft[] }>(
+    addr,
+    `/api/v1/drafts?status=${encodeURIComponent(status)}`,
+  ).then((r) => r.drafts);
+}
+
+/** One draft set for review — documents, rows, rubric result, editable/locked
+ *  fields. Requires draft:view-any. */
+export function getReview(addr: string, correlationId: string): Promise<ReviewDetail> {
+  return agentFetch<ReviewDetail>(addr, `/api/v1/draft/${encodeURIComponent(correlationId)}`);
+}
+
+/** Disposition a draft. Requires draft:approve (reviewer/admin), and the server
+ *  enforces APPROVER != AUTHOR and refuses approval on a debug agent — a 403
+ *  here is those controls firing, surfaced to the reviewer verbatim. */
+export function dispositionDraft(
+  addr: string,
+  correlationId: string,
+  body: { decision: Disposition; reason?: string; edits?: Record<string, Record<string, unknown>[]> },
+): Promise<DispositionResult> {
+  return agentFetch<DispositionResult>(
+    addr,
+    `/api/v1/draft/${encodeURIComponent(correlationId)}/disposition`,
+    { method: "POST", body: JSON.stringify(body) },
+  );
 }

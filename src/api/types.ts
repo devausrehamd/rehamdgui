@@ -413,3 +413,76 @@ export interface RunDetail {
   mode: string | null;
   steps: RunStep[];
 }
+
+// ---------------------------------------------------------------------------
+// Review flow — draft queue, review detail, disposition
+// ---------------------------------------------------------------------------
+
+/** One draft set awaiting review. */
+export interface PendingDraft {
+  setId: string;
+  /** The review detail is keyed by this; all docs in a set share it. */
+  correlationId: string | null;
+  documentType: string;
+  subject: string | null;
+  status: string;
+  createdAt: string; // ISO
+}
+
+/** A trajectory verdict as persisted with the draft — WHY a required source
+ *  was or was not consulted. Present when the run recorded one. */
+export interface DraftTrajectory {
+  passed: boolean;
+  unknown: boolean;
+  findings: { ruleId: string; kind: string; violation: string; detail: string; reason: string }[];
+}
+
+/** The rubric result stored on a draft document — everything the server
+ *  decided. The GUI displays these, never recomputes them. */
+export interface DraftCriterionResults {
+  score: number;
+  gatePassed: boolean;
+  approved: boolean;
+  reviewRequired: boolean;
+  criticalFailures: string[];
+  primaryFailures: string[];
+  trajectory: DraftTrajectory | null;
+  perCriterion: {
+    id: string;
+    verdict: "pass" | "fail";
+    source: string;
+    rationale: string;
+  }[];
+}
+
+/** One document within a draft set, as the reviewer sees it. */
+export interface ReviewDocument {
+  documentId: string;
+  sectionId: string;
+  /** Typed rows — the reviewer edits THESE, never the markdown. */
+  rows: Record<string, unknown>[];
+  /** Read-only rendering for human reading. */
+  markdown: string;
+  criterionResults: DraftCriterionResults | null;
+  annotations: Record<string, unknown> | null;
+  /** Fields the reviewer may edit. */
+  editableFields: string[];
+  /** Fields the reviewer may NOT edit — computed by code (e.g. RPN). */
+  lockedFields: string[];
+}
+
+export interface ReviewDetail {
+  correlationId: string;
+  documentType: string;
+  status: string;
+  documents: ReviewDocument[];
+}
+
+export type Disposition = "approve" | "reject" | "rerun";
+
+export interface DispositionResult {
+  correlationId: string;
+  decision: Disposition;
+  status: string;
+  editsRecorded: number;
+}

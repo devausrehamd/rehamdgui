@@ -8,6 +8,8 @@ import { CommittedRubricPage } from "./pages/CommittedRubricPage";
 import { RubricEditorPage } from "./pages/RubricEditorPage";
 import { RunsPage } from "./pages/RunsPage";
 import { RunDetailPage } from "./pages/RunDetailPage";
+import { ReviewQueuePage } from "./pages/ReviewQueuePage";
+import { ReviewDetailPage } from "./pages/ReviewDetailPage";
 
 export default function App() {
   return (
@@ -26,6 +28,8 @@ export default function App() {
             <Route path="/drafts/:id" element={<RubricEditorPage />} />
             <Route path="/runs" element={<RunsPage />} />
             <Route path="/runs/:correlationId" element={<RunDetailPage />} />
+            <Route path="/review" element={<ReviewQueuePage />} />
+            <Route path="/review/:correlationId" element={<ReviewDetailPage />} />
           </Route>
         </Route>
       </Route>

@@ -29,14 +29,17 @@ interface AuthContextValue {
   can: (permission: Permission) => boolean;
 }
 
-/** The two permissions this slice cares about (§7). Extend as slices grow. */
-export type Permission = "draft:view-any" | "rubric:edit";
+/** The permissions the GUI gates controls on. Extend as slices grow. */
+export type Permission = "draft:view-any" | "rubric:edit" | "draft:approve";
 
 // Convenience mapping for SHOWING controls. Mirrors the server's intent, but is
 // never authoritative — admin has a wildcard server-side; here we approximate.
+// draft:approve is reviewer + admin (engineer drafts, reviewer approves): the
+// disposition controls are hidden for anyone else, but the server enforces it
+// AND enforces APPROVER != AUTHOR on top, which no client check can see.
 const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
-  admin: ["draft:view-any", "rubric:edit"],
-  reviewer: ["draft:view-any"],
+  admin: ["draft:view-any", "rubric:edit", "draft:approve"],
+  reviewer: ["draft:view-any", "draft:approve"],
   engineer: ["draft:view-any"],
   service: [],
 };
