@@ -217,6 +217,29 @@ export async function agentFetch<T>(
 }
 
 // ---------------------------------------------------------------------------
+// Orchestrator (Talk Agent) — ask a question; it selects a capability and
+// orchestrates the answer. One session per question.
+export interface OrchestratorAskResult {
+  correlationId: string;
+  queryId?: string;
+  selection: {
+    capability: string;
+    kind: string;
+    description: string;
+    confidence: number;
+    alternatives: { id: string; kind: string }[];
+  };
+  answer: string | null;
+  needsClarification?: boolean;
+}
+
+export async function orchestratorAsk(addr: string, question: string): Promise<OrchestratorAskResult> {
+  return agentFetch<OrchestratorAskResult>(addr, "/api/v1/orchestrator/ask", {
+    method: "POST",
+    body: JSON.stringify({ question }),
+  });
+}
+
 // Rubric endpoints (§6) — each takes the selected agent's address.
 // ---------------------------------------------------------------------------
 

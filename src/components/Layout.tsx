@@ -27,6 +27,7 @@ export function Layout() {
         <span className="brand">QMS</span>
         <nav>
           <NavLink to="/agents">Agents</NavLink>
+          {agent && <NavLink to="/ask">Ask</NavLink>}
           {agent && <NavLink to="/rubrics">Rubrics</NavLink>}
           {agent && <NavLink to="/runs">Runs</NavLink>}
           {agent && <NavLink to="/review">Review</NavLink>}
