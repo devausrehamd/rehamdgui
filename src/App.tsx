@@ -3,6 +3,7 @@ import { Layout } from "./components/Layout";
 import { RequireAgent, RequireAuth } from "./components/guards";
 import { LoginPage } from "./pages/LoginPage";
 import { AgentPickerPage } from "./pages/AgentPickerPage";
+import { OrchestratorAskPage } from "./pages/OrchestratorAskPage";
 import { RubricListPage } from "./pages/RubricListPage";
 import { CommittedRubricPage } from "./pages/CommittedRubricPage";
 import { RubricEditorPage } from "./pages/RubricEditorPage";
@@ -23,6 +24,7 @@ export default function App() {
 
           {/* Everything below also requires a resolved agent. */}
           <Route element={<RequireAgent />}>
+            <Route path="/ask" element={<OrchestratorAskPage />} />
             <Route path="/rubrics" element={<RubricListPage />} />
             <Route path="/rubrics/committed/:type" element={<CommittedRubricPage />} />
             <Route path="/drafts/:id" element={<RubricEditorPage />} />
